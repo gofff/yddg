@@ -62,10 +62,20 @@ class PathRequester:
     def get_all_paths(self,
                       urls: List[str]) -> List[Tuple[str, str]]:
 
-        return []
+        all_paths: List[Tuple[str, str]] = []
+        for url in urls:
+            cur_paths = YD_get_files_from_url(url, self.max_files)
+            for path in cur_paths:
+                all_paths.append((url, path))
+        return all_paths
 
 
-    def get_path_stream(self, links: List[str],
+    def get_path_stream(self, urls: List[str],
                         path_queue: mp.Queue) -> None:
 
+        for url in urls:
+            cur_paths = YD_get_files_from_url(url, self.max_files)
+            for path in cur_paths:
+                path_queue.put((url, path), block = True)
+        path_queue.put(None, block = True)
         return
