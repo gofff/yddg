@@ -49,6 +49,7 @@ def test_correct_out_YD_request_items(correct_public_test_data):
 def bad_public_test_data(request):
     return request.param
 
+
 def test_bad_out_YD_request_items(bad_public_test_data):
 
     url = bad_public_test_data['url']
@@ -97,7 +98,8 @@ def test_correct_out_YD_get_required_files(correct_test_item,
 
     assert len(out)
     # Have not empty strings
-    assert not len([p for p in out if len(p) == 0])\
+    assert not [p for p in out 
+                  if p not in CORRECT_OUT_PATHS]
 
 
 def test_bad_out_YD_get_required_files(bad_test_item,
@@ -110,6 +112,51 @@ def test_bad_out_YD_get_required_files(bad_test_item,
                                                url, max_files)
 
     assert not len(out)
+
+@pytest.fixture
+def path_requester_object():
+    return path_requester.PathRequester()
+
+@pytest.fixture
+def url_list():
+    return [CORRECT_URL, BAD_URL]
+
+class TestPathRequester:
+
+    def test_get_all_paths(self, 
+                           path_requester_object, url_list):
+
+        pr = path_requester_object
+        out = pr.get_all_paths(url_list)
+
+        assert not [p for p in out 
+                      if (p[1] not in CORRECT_OUT_PATHS or
+                          p[0] != CORRECT_URL)]
+
+
+    def test_get_path_stream(self, 
+                             path_requester_object, url_list):
+
+        pr = path_requester_object
+
+        queue = mp.Queue(1)
+        process = mp.Process(target = pr.get_path_stream, 
+                             args=(url_list, queue,))
+        process.start()
+
+        for i in range(len(CORRECT_OUT_PATHS)):
+            queue_out = queue.get(block = True)
+            assert queue_out is not None
+            assert queue_out[0] == CORRECT_URL
+            assert queue_out[1] in CORRECT_OUT_PATHS
+
+        assert queue.get(block = True) is None
+
+        process.join()
+
+    
+
+
 
 
 
