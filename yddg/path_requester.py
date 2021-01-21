@@ -1,15 +1,15 @@
 import requests
-from typing import List, Tuple, Dict, Union
+from typing import List, Tuple, Dict, Union, Any
 import multiprocessing as mp
 import warnings
 
-from constants import YD_API
+import constants as const
 
 
 def YD_request_items(url: str, path: str,
                      max_files: int) -> List[Dict[str, str]]:
 
-    api_url = YD_API.PUBLIC_URL
+    api_url = const.YD_API.PUBLIC_URL
     params: Dict[str, Union[str, int]] = {
         'public_key' : url,
         'limit' : max_files
@@ -19,11 +19,8 @@ def YD_request_items(url: str, path: str,
 
     r = requests.get(api_url, params = params)
     if r.status_code != requests.codes.ok:
-        warnings.warn(
-            f'Bad request status ({r.status_code}) to ' + \
-            f'{api_url} with params: {params}',
-            RuntimeWarning
-        )
+        const.bad_request_warning(r.status_code,
+                                  api_url, params)
         return []
 
     resource = r.json()
