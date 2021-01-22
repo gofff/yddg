@@ -3,7 +3,7 @@ from typing import List, Tuple, Dict, Union, Any
 import multiprocessing as mp
 import warnings
 
-import constants as const
+import yddg.constants as const
 
 
 def YD_request_items(url: str, path: str,

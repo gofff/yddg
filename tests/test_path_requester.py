@@ -1,26 +1,16 @@
-import sys
-sys.path.append('./yddg')
-
 import pytest
 import multiprocessing as mp
 
 
 import yddg.path_requester as path_requester
+from tests.cases import PublicDiskCaseConstants as case_const
 
-
-CORRECT_URL = 'https://yadi.sk/d/FMbYkNAfcOYAzg?w=1'
-BAD_URL = ''
-CORRECT_OUT_PATHS = ['/folder_1/avo.jpg', 
-                     '/folder_1/file_2.txt', 
-                     '/folder_2/file_3.txt', 
-                     '/folder_2/file_4.txt', 
-                     '/file_1.txt']
 
 @pytest.fixture
 def correct_public_test_data():
     return {
-            'url': CORRECT_URL,
-            'max_files': 1000
+            'url': case_const.CORRECT_URL,
+            'max_files': case_const.CORRECT_FILES_NUM
            }
 
 
@@ -38,12 +28,12 @@ def test_correct_out_YD_request_items(correct_public_test_data):
 
 @pytest.fixture(params=[
         {
-            'url': CORRECT_URL,
+            'url': case_const.CORRECT_URL,
             'max_files': 0
         },
         {
-            'url': BAD_URL,
-            'max_files': 1000
+            'url': case_const.BAD_URL,
+            'max_files': case_const.CORRECT_FILES_NUM
         },
 ])
 def bad_public_test_data(request):
@@ -84,7 +74,7 @@ def bad_test_item(request):
 
 @pytest.fixture
 def correct_out_paths():
-    return CORRECT_OUT_PATHS
+    return case_const.CORRECT_OUT_PATHS
 
 
 def test_correct_out_YD_get_required_files(correct_test_item,
@@ -99,7 +89,7 @@ def test_correct_out_YD_get_required_files(correct_test_item,
     assert len(out)
     # Have not empty strings
     assert not [p for p in out 
-                  if p not in CORRECT_OUT_PATHS]
+                  if p not in case_const.CORRECT_OUT_PATHS]
 
 
 def test_bad_out_YD_get_required_files(bad_test_item,
@@ -119,7 +109,7 @@ def path_requester_object():
 
 @pytest.fixture
 def url_list():
-    return [CORRECT_URL, BAD_URL]
+    return [case_const.CORRECT_URL, case_const.BAD_URL]
 
 class TestPathRequester:
 
@@ -130,8 +120,8 @@ class TestPathRequester:
         out = pr.get_all_paths(url_list)
 
         assert not [p for p in out 
-                      if (p[1] not in CORRECT_OUT_PATHS or
-                          p[0] != CORRECT_URL)]
+                      if (p[1] not in case_const.CORRECT_OUT_PATHS or
+                          p[0] != case_const.CORRECT_URL)]
 
 
     def test_get_path_stream(self, 
@@ -144,11 +134,11 @@ class TestPathRequester:
                              args=(url_list, queue,))
         process.start()
 
-        for i in range(len(CORRECT_OUT_PATHS)):
+        for i in range(len(case_const.CORRECT_OUT_PATHS)):
             queue_out = queue.get(block = True)
             assert queue_out is not None
-            assert queue_out[0] == CORRECT_URL
-            assert queue_out[1] in CORRECT_OUT_PATHS
+            assert queue_out[0] == case_const.CORRECT_URL
+            assert queue_out[1] in case_const.CORRECT_OUT_PATHS
 
         assert queue.get(block = True) is None
 
