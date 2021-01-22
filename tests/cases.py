@@ -10,3 +10,6 @@ class PublicDiskCaseConstants:
                          '/folder_2/file_4.txt', 
                          '/file_1.txt']
     CORRECT_FILES_NUM = 16
+    PATH_FILE_1 = '/file_1.txt'
+    CONTENT_FILE_1 = 'line1\nline2\nline3\nline4'
+    LINES_IN_TXTS = 17
