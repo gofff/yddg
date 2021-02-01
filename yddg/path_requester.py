@@ -50,7 +50,7 @@ def YD_get_files_from_url(url: str, max_files: int) -> List[str]:
 class PathRequester:
 
 
-    def __init__(self, max_files_in_path: int = 1000) -> None:
+    def __init__(self, max_files_in_path: int) -> None:
 
         self.max_files = max_files_in_path
         return
