@@ -103,15 +103,21 @@ def test_bad_out_YD_get_required_files(bad_test_item,
 
     assert not len(out)
 
+
 @pytest.fixture
 def path_requester_object():
-    return path_requester.PathRequester()
+
+    files_num = case_const.CORRECT_FILES_NUM
+    return path_requester.PathRequester(max_files_in_path = files_num)
+
 
 @pytest.fixture
 def url_list():
     return [case_const.CORRECT_URL, case_const.BAD_URL]
 
+
 class TestPathRequester:
+
 
     def test_get_all_paths(self, 
                            path_requester_object, url_list):

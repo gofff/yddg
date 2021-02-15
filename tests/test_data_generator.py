@@ -19,11 +19,13 @@ from tests.cases import PublicDiskCaseConstants as case_const
         },
 ])
 def data_generator_object(request):
+    
     urls = [case_const.CORRECT_URL, case_const.BAD_URL]
     path_stream = request.param['path_stream']
     queue_size = request.param['queue_size']
+    files_num = case_const.CORRECT_FILES_NUM
     return YndxDiskDataGenerator(urls = urls,
-                                 max_files_in_path = 16,
+                                 max_files_in_path = files_num,
                                  path_stream = path_stream,
                                  queue_size = queue_size)
 
