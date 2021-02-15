@@ -37,6 +37,7 @@ class YndxDiskDataGenerator:
 
             path_list = self.path_requester.get_all_paths(urls)
 
+            download_call = self.downloader.download_stream
             self.download_proc = mp.Process(
                                       target = download_call,
                                       args = (path_list, self.out_queue)
@@ -55,7 +56,8 @@ class YndxDiskDataGenerator:
 
 
     def __del__(self):
-        if self.path_requester:
+        
+        if self.path_stream:
             self.path_request_proc.join()
-        self.img_download_proc.join()
+        self.download_proc.join()
     
