@@ -31,7 +31,7 @@ class Downloader:
             const.bad_request_warning(resp.status_code,
                                       download_url, params = '')
             return b''
-
+        
         return resp.content
 
 

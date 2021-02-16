@@ -10,10 +10,12 @@ class YndxDiskDataGenerator:
     def __init__(self, urls: List[str],
                  max_files_in_path: int,
                  path_stream: bool = False,
-                 queue_size: int = 2) -> None:
+                 queue_size: int = 2,
+                 exclude_names: str = '') -> None:
 
         self.path_stream = path_stream
-        self.path_requester = PathRequester(max_files_in_path)
+        self.path_requester = PathRequester(max_files_in_path,
+                                            exclude_names)
         
         self.downloader = Downloader()
         self.out_queue: mp.Queue = mp.Queue(queue_size)
@@ -37,9 +39,9 @@ class YndxDiskDataGenerator:
 
             path_list = self.path_requester.get_all_paths(urls)
 
-            download_call = self.downloader.download_stream
+            download_call_flist = self.downloader.download_stream
             self.download_proc = mp.Process(
-                                      target = download_call,
+                                      target = download_call_flist,
                                       args = (path_list, self.out_queue)
                                  )
 

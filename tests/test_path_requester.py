@@ -92,6 +92,24 @@ def test_correct_out_YD_get_required_files(correct_test_item,
                   if p not in case_const.CORRECT_OUT_PATHS]
 
 
+@pytest.mark.parametrize(
+        'exclude', ['folder_1', '.jpg']
+    )
+def test_exclude_names_YD_get_required_files(correct_test_item,
+                                             correct_public_test_data,
+                                             correct_out_paths,
+                                             exclude):
+    
+    exclude_regexp = '*' + exclude + '*'
+    url = correct_public_test_data['url']
+    max_files = correct_public_test_data['max_files']
+    out = path_requester.YD_get_required_files(correct_test_item,
+                                               url, max_files,
+                                               exclude_regexp)
+
+    assert not [name for name in out if name.find(exclude) >= 0]
+
+
 def test_bad_out_YD_get_required_files(bad_test_item,
                                        bad_public_test_data,
                                        correct_out_paths):

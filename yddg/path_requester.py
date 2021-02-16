@@ -2,6 +2,7 @@ import requests
 from typing import List, Tuple, Dict, Union, Any
 import multiprocessing as mp
 import warnings
+import re
 
 import yddg.constants as const
 
@@ -28,10 +29,16 @@ def YD_request_items(url: str, path: str,
 
 
 def YD_get_required_files(items: List[Dict[str,str]], 
-                          url: str, max_files: int) -> List[str]:
+                          url: str, max_files: int,
+                          exclude_filter: str = '') -> List[str]:
 
     files = []
+    exclude_pattern = re.compile(re.escape(exclude_filter))
     for item in items:
+        if (exclude_filter and 
+            exclude_pattern.fullmatch(item['path']) is None):
+                continue
+
         if item['type'] == 'dir':
             nested_items = YD_request_items(url, item['path'], max_files)
             files.extend(YD_get_required_files(nested_items, url, 
@@ -41,18 +48,21 @@ def YD_get_required_files(items: List[Dict[str,str]],
     return files
 
 
-def YD_get_files_from_url(url: str, max_files: int) -> List[str]:
+def YD_get_files_from_url(url: str, max_files: int,
+                          exclude_filter: str = '') -> List[str]:
 
     return YD_get_required_files(YD_request_items(url, '', max_files),
-                                 url, max_files)
+                                 url, max_files, exclude_filter)
 
 
 class PathRequester:
 
 
-    def __init__(self, max_files_in_path: int) -> None:
+    def __init__(self, max_files_in_path: int,
+                 exclude_names_re: str = '') -> None:
 
         self.max_files = max_files_in_path
+        self.exclude_filter = exclude_names_re
         return
 
 
@@ -61,7 +71,8 @@ class PathRequester:
 
         all_paths: List[Tuple[str, str]] = []
         for url in urls:
-            cur_paths = YD_get_files_from_url(url, self.max_files)
+            cur_paths = YD_get_files_from_url(url, self.max_files,
+                                              self.exclude_filter)
             for path in cur_paths:
                 all_paths.append((url, path))
         return all_paths
@@ -71,7 +82,8 @@ class PathRequester:
                         path_queue: mp.Queue) -> None:
 
         for url in urls:
-            cur_paths = YD_get_files_from_url(url, self.max_files)
+            cur_paths = YD_get_files_from_url(url, self.max_files,
+                                              self.exclude_filter)
             for path in cur_paths:
                 path_queue.put((url, path), block = True)
         path_queue.put(None, block = True)
