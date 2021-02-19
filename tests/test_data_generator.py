@@ -1,7 +1,7 @@
 import pytest
 
-from yddg.data_generator import YndxDiskDataGenerator
 from tests.cases import PublicDiskCaseConstants as case_const
+from yddg.data_generator import YndxDiskDataGenerator
 
 
 @pytest.fixture

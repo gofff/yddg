@@ -1,6 +1,7 @@
-import requests
-from typing import List, Tuple, Any
 import multiprocessing as mp
+from typing import Any, List, Tuple
+
+import requests
 
 import yddg.constants as const
 

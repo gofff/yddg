@@ -1,6 +1,6 @@
-import pytest
 import multiprocessing as mp
 
+import pytest
 
 import yddg.path_requester as path_requester
 from tests.cases import PublicDiskCaseConstants as case_const

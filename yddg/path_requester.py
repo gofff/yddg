@@ -1,8 +1,9 @@
-import requests
-from typing import List, Tuple, Dict, Union, Any
 import multiprocessing as mp
-import warnings
 import re
+import warnings
+from typing import Any, Dict, List, Tuple, Union
+
+import requests
 
 import yddg.constants as const
 

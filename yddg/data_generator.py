@@ -1,5 +1,6 @@
+import multiprocessing as mp
 from typing import Any, List, Tuple
-import multiprocessing as mp 
+
 from yddg.downloader import Downloader
 from yddg.path_requester import PathRequester
 

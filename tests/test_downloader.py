@@ -1,8 +1,9 @@
-import pytest
 import multiprocessing as mp
 
-from yddg.downloader import Downloader
+import pytest
+
 from tests.cases import PublicDiskCaseConstants as case_const
+from yddg.downloader import Downloader
 
 
 def path_puller(queue):
