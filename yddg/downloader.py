@@ -1,5 +1,5 @@
 import multiprocessing as mp
-from typing import Any, List, Tuple
+from typing import List, Tuple
 
 import requests
 

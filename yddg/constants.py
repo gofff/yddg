@@ -1,8 +1,6 @@
 import warnings
 from typing import Any
 
-import requests
-
 
 class YD_API:
 
