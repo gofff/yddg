@@ -1,0 +1,4 @@
+requests>=2.13.0
+tox>=3.22.0
+pytest>=6.2.1
+isort>=5.7.0
