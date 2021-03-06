@@ -3,7 +3,7 @@ import multiprocessing as mp
 import pytest
 
 from tests.cases import PublicDiskCaseConstants as case_const
-from yddg.downloader import Downloader
+from yddg.downloader import Downloader, download_file
 
 
 def path_puller(queue):
@@ -32,10 +32,9 @@ class TestDownloader:
 
     def test_download_file(self):
 
-        dl = Downloader()
         input_url = case_const.CORRECT_URL
         input_path = case_const.PATH_FILE_1
-        output = dl.download_file(input_url, input_path)
+        output = download_file(input_url, input_path)
 
         decoded_output = output.decode('utf-8')
         decoded_output = decoded_output.replace('\r', '')

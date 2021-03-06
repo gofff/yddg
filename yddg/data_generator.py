@@ -1,5 +1,5 @@
 import multiprocessing as mp
-from typing import Any, List
+from typing import Any, List, Optional
 
 from yddg.downloader import Downloader
 from yddg.path_requester import PathRequester
@@ -18,11 +18,18 @@ class YndxDiskDataGenerator:
         self.path_requester = PathRequester(max_files_in_path, exclude_names)
 
         self.downloader = Downloader()
-        self.out_queue: mp.Queue = mp.Queue(queue_size)
+        self.download_proc: Optional[mp.Process] = None
 
-        if path_stream:
+        self.queue_size = queue_size
+        self.out_queue: mp.Queue[Any] = mp.Queue(queue_size)
 
-            path_queue: mp.Queue = mp.Queue(queue_size * 2)
+        self.__start_process__(urls)
+
+    def __start_process__(self, urls: List[str]) -> None:
+
+        if self.path_stream:
+
+            path_queue: mp.Queue[Any] = mp.Queue(self.queue_size * 2)
             path_request_call = self.path_requester.get_path_stream
             self.path_request_proc = mp.Process(target=path_request_call,
                                                 args=(urls, path_queue))
@@ -35,8 +42,8 @@ class YndxDiskDataGenerator:
 
             path_list = self.path_requester.get_all_paths(urls)
 
-            download_call_flist = self.downloader.download_stream
-            self.download_proc = mp.Process(target=download_call_flist,
+            download_from_list_call = self.downloader.download_stream
+            self.download_proc = mp.Process(target=download_from_list_call,
                                             args=(path_list, self.out_queue))
 
         self.download_proc.start()
