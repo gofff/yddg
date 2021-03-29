@@ -1,2 +1,2 @@
-pytest>=6.2.1
-isort>=5.7.0
+pytest
+isort

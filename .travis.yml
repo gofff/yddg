@@ -2,7 +2,6 @@ language: python
 # ===== Linux ======
 dist: xenial
 python:
-  - 3.5
   - 3.6
   - 3.7
   - 3.8
@@ -39,11 +38,11 @@ matrix:
       before_install:
         - choco install python --version 3.7.4
         - python -m pip install --upgrade pip
-        - pip3 install -r requirements.txt
-        - pip3 install -r requirements-test.txt
-        - pip3 install codecov
+        - python -m pip install -r requirements.txt
+        - python -m pip install -r requirements-test.txt
+        - python -m pip install codecov
       env: PATH=/c/Python37:/c/Python37/Scripts:$PATH
-      script: python3 -m pytest
+      script: python -m pytest
 before_install:
   - python -m pip install --upgrade pip
   - pip3 install -r requirements.txt
