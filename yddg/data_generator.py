@@ -5,7 +5,13 @@ from typing import Any, List, Optional
 from yddg.downloader import Downloader
 from yddg.path_requester import PathRequester
 
-#mp.set_start_method('fork')
+
+def start_process(process: mp.Process) -> None:
+
+    process.start()
+    while (not process.is_alive()):
+        time.sleep(0.001)
+
 
 class YndxDiskDataGenerator:
 
@@ -52,10 +58,9 @@ class YndxDiskDataGenerator:
                                             args=(path_list, self.out_queue))
 
         print('Try to start downloader')
-        self.download_proc.daemon = True
-        self.download_proc.start()
+        #self.download_proc.start()
+        start_process(self.download_proc)
         
-        print('Started')
         return
 
     def item_generator(self) -> Any:
