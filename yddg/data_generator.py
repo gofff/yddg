@@ -52,8 +52,9 @@ class YndxDiskDataGenerator:
                                             args=(path_list, self.out_queue))
 
         print('Try to start downloader')
+        self.download_proc.daemon = True
         self.download_proc.start()
-        #time.sleep(5)
+        
         print('Started')
         return
 
