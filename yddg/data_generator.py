@@ -1,4 +1,5 @@
 import multiprocessing as mp
+import time
 from typing import Any, List, Optional
 
 from yddg.downloader import Downloader
@@ -52,6 +53,7 @@ class YndxDiskDataGenerator:
 
         print('Try to start downloader')
         self.download_proc.start()
+        time.sleep(5)
         print('Started')
         return
 
