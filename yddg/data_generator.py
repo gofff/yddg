@@ -53,7 +53,7 @@ class YndxDiskDataGenerator:
 
         print('Try to start downloader')
         self.download_proc.start()
-        time.sleep(5)
+        #time.sleep(5)
         print('Started')
         return
 
