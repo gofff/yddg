@@ -1,86 +1,89 @@
+from collections import deque
 import multiprocessing as mp
 import re
-from typing import Dict, List, Tuple, Union
+import random
+from typing import Dict, List, Tuple, Union, Any, Optional
 
+import aiohttp
+import asyncio
 import requests
 
-import yddg.constants as const
+import constants as const
 
-
-def YD_request_items(url: str, path: str,
-                     max_files: int) -> List[Dict[str, str]]:
-
+async def _get_items(session: aiohttp.ClientSession, url: str, path: str, 
+                     max_files: int) -> Any:
     api_url = const.YD_API.PUBLIC_URL
     params: Dict[str, Union[str, int]] = {
         'public_key': url,
-        'limit': max_files
+        'limit': max_files,
+        'path': path,
     }
-    if len(path) > 1:
-        params['path'] = path
 
-    r = requests.get(api_url, params=params)
-    if r.status_code != requests.codes.ok:
-        const.bad_request_warning(r.status_code, api_url, params)
-        return []
+    async with session.get(api_url, params=params) as resp:
+        if resp.status != const.REQ_STATUS.OK:
+            const.bad_request_warning(resp.status, api_url, params)
+            return []
+        resp_json = await resp.json()
+        return resp_json['_embedded']['items']
 
-    resource = r.json()
-    return resource['_embedded']['items']
-
-
-def YD_get_required_files(items: List[Dict[str, str]],
-                          url: str,
-                          max_files: int,
-                          exclude_filter: str = '') -> List[str]:
-
-    files = []
-    exclude_pattern = re.compile(re.escape(exclude_filter))
-    for item in items:
-        if (exclude_filter
-                and exclude_pattern.fullmatch(item['path']) is None):
-            continue
-
-        if item['type'] == 'dir':
-            nested_items = YD_request_items(url, item['path'], max_files)
-            files.extend(YD_get_required_files(nested_items, url, max_files))
-        elif item['type'] == 'file':
-            files.append(item['path'])
-    return files
-
-
-def YD_get_files_from_url(url: str,
-                          max_files: int,
-                          exclude_filter: str = '') -> List[str]:
-
-    return YD_get_required_files(YD_request_items(url, '', max_files), url,
-                                 max_files, exclude_filter)
 
 
 class PathRequester:
 
     def __init__(self,
+                 urls: List[str],
                  max_files_in_path: int,
-                 exclude_names_re: str = '') -> None:
+                 out_queue: asyncio.Queue,
+                 exclude_names: str = '') -> None:
 
+        self.path_stack = deque([(url, '') for url in urls])
         self.max_files = max_files_in_path
-        self.exclude_filter = exclude_names_re
-        return
+        self.out_queue = out_queue
+        self.skip_filter: Optional[re.Pattern] = None
+        if exclude_names:
+            self.skip_filter = re.compile(exclude_names)
 
-    def get_all_paths(self, urls: List[str]) -> List[Tuple[str, str]]:
+    async def run(self) -> None:
 
-        all_paths: List[Tuple[str, str]] = []
-        for url in urls:
-            cur_paths = YD_get_files_from_url(url, self.max_files,
-                                              self.exclude_filter)
-            for path in cur_paths:
-                all_paths.append((url, path))
-        return all_paths
+        async with aiohttp.ClientSession() as session:
 
-    def get_path_stream(self, urls: List[str], path_queue: mp.Queue) -> None:
+            while len(self.path_stack):
+                cur_url, cur_path = self.path_stack.popleft()
+                items = await _get_items(session, cur_url, cur_path, 
+                                         self.max_files)
+                for item in items:
+                    path = item['path']
+                    if (self.skip_filter is not None
+                            and self.skip_filter.fullmatch(path) is not None):
+                        continue
+                    url_path = (cur_url, path)
+                    if item['type'] == 'dir':
+                        self.path_stack.appendleft(url_path)
+                    elif item['type'] == 'file':
+                        #yield url_path
+                        await self.out_queue.put(url_path)
+                    else:
+                        assert f"""Bad path item type {item['type']} with 
+                                requested path {url_path}"""
+                        pass
+            await self.out_queue.put(None)
+'''
+async def consumer(q):
+    item = await q.get()
+    q.task_done()
+    while item is not None:
+        print(f"{item} get")
+        item = await q.get()
+        q.task_done()
 
-        for url in urls:
-            cur_paths = YD_get_files_from_url(url, self.max_files,
-                                              self.exclude_filter)
-            for path in cur_paths:
-                path_queue.put((url, path), block=True)
-        path_queue.put(None, block=True)
-        return
+async def test():
+    q = asyncio.Queue()
+    pr = PathRequester(['https://yadi.sk/d/FMbYkNAfcOYAzg?w=1'], 1000, q)
+    producer_task = await asyncio.create_task(pr.run())
+    consumer_task = await asyncio.create_task(consumer(q))
+    await q.join() 
+    
+
+loop = asyncio.get_event_loop()
+loop.run_until_complete(test())
+'''     
