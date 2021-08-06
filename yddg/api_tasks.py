@@ -1,11 +1,9 @@
-from collections import deque
-import multiprocessing as mp
-from typing import List, Tuple, Any, Dict
-
-import aiohttp
 import asyncio
 import re
-import requests
+from collections import deque
+from typing import Any, List
+
+import aiohttp
 
 import constants as const
 
@@ -16,9 +14,9 @@ async def download_file(session: aiohttp.ClientSession, url: str,
     download_url = ""
     api_url = const.YD_API.PUBLIC_DOWNLOAD_URL
     params = {
-                'public_key': url,
-                'path': path,
-             }
+        'public_key': url,
+        'path': path,
+    }
     async with session.get(api_url, params=params) as resp:
         if resp.status != const.REQ_STATUS.OK:
             const.bad_request_warning(resp.status, api_url, params)
@@ -37,8 +35,8 @@ async def download_file(session: aiohttp.ClientSession, url: str,
     return b''
 
 
-async def get_items(session: aiohttp.ClientSession, url: str, path: str, 
-                     max_files: int) -> Any:
+async def get_items(session: aiohttp.ClientSession, url: str, path: str,
+                    max_files: int) -> Any:
     api_url = const.YD_API.PUBLIC_URL
     params = {
         'public_key': url,
@@ -54,9 +52,9 @@ async def get_items(session: aiohttp.ClientSession, url: str, path: str,
         return resp_json['_embedded']['items']
 
 
-async def download_task(path_queue: asyncio.Queue, 
+async def download_task(path_queue: asyncio.Queue,
                         out_queue: asyncio.Queue) -> None:
-    
+
     async with aiohttp.ClientSession() as session:
         url_path = await path_queue.get()
         path_queue.task_done()
@@ -66,13 +64,13 @@ async def download_task(path_queue: asyncio.Queue,
             url_path = await path_queue.get()
             path_queue.task_done()
         await out_queue.put(None)
-        
+
 
 async def parse_paths_task(urls: List[str],
                            max_files_in_path: int,
                            out_queue: asyncio.Queue,
                            exclude_names: str = '') -> None:
-    
+
     path_stack = deque([(url, '') for url in urls])
     skip_filter = re.compile(exclude_names) if exclude_names else None
 
@@ -80,8 +78,8 @@ async def parse_paths_task(urls: List[str],
 
         while len(path_stack):
             cur_url, cur_path = path_stack.popleft()
-            items = await get_items(session, cur_url, cur_path, 
-                                     max_files_in_path)
+            items = await get_items(session, cur_url, cur_path,
+                                    max_files_in_path)
             for item in items:
                 path = item['path']
                 if (skip_filter is not None
@@ -93,10 +91,11 @@ async def parse_paths_task(urls: List[str],
                 elif item['type'] == 'file':
                     await out_queue.put(url_path)
                 else:
-                    assert f"""Bad path item type {item['type']} with 
+                    assert f"""Bad path item type {item['type']} with
                             requested path {url_path}"""
                     pass
         await out_queue.put(None)
+
 
 '''
 async def download_consumer(file_q):
