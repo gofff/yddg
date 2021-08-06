@@ -1,6 +1,9 @@
 import warnings
 from typing import Any
 
+class REQ_STATUS:
+
+    OK = 200
 
 class YD_API:
 
