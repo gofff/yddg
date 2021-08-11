@@ -1,6 +1,8 @@
 import warnings
 from typing import Any
 
+DEFAULT_QUEUE_SIZE = 8
+
 class REQ_STATUS:
 
     OK = 200
