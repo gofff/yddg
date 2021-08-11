@@ -1,16 +1,17 @@
 import asyncio
 import re
 from collections import deque
-from typing import Any, List
+from typing import Any, List, Tuple, AsyncGenerator
 
 import aiohttp
 
 import constants as const
 
+Path_t = Tuple[str, str]
+
 
 async def download_file(session: aiohttp.ClientSession, url: str,
                         path: str) -> bytes:
-
     download_url = ""
     api_url = const.YD_API.PUBLIC_DOWNLOAD_URL
     params = {
@@ -54,7 +55,6 @@ async def get_items(session: aiohttp.ClientSession, url: str, path: str,
 
 async def download_task(path_queue: asyncio.Queue,
                         out_queue: asyncio.Queue) -> None:
-
     async with aiohttp.ClientSession() as session:
         url_path = await path_queue.get()
         path_queue.task_done()
@@ -66,16 +66,14 @@ async def download_task(path_queue: asyncio.Queue,
         await out_queue.put(None)
 
 
-async def parse_paths_task(urls: List[str],
-                           max_files_in_path: int,
-                           out_queue: asyncio.Queue,
-                           exclude_names: str = '') -> None:
-
+async def parse_paths_task(
+        urls: List[str],
+        max_files_in_path: int,
+        exclude_names: str = '') -> AsyncGenerator[Path_t, None]:
     path_stack = deque([(url, '') for url in urls])
     skip_filter = re.compile(exclude_names) if exclude_names else None
 
     async with aiohttp.ClientSession() as session:
-
         while len(path_stack):
             cur_url, cur_path = path_stack.popleft()
             items = await get_items(session, cur_url, cur_path,
@@ -89,36 +87,15 @@ async def parse_paths_task(urls: List[str],
                 if item['type'] == 'dir':
                     path_stack.appendleft(url_path)
                 elif item['type'] == 'file':
-                    await out_queue.put(url_path)
+                    yield url_path
+                    #await out_queue.put(url_path)
                 else:
                     assert f"""Bad path item type {item['type']} with
                             requested path {url_path}"""
                     pass
-        await out_queue.put(None)
 
-
-'''
-async def download_consumer(file_q):
-    item = await file_q.get()
-    file_q.task_done()
-    while item is not None:
-        print(f"downloaded: {item[0]} {item[1]}")
-        item = await file_q.get()
-        file_q.task_done()
-
-async def test_downloader():
-    path_q = asyncio.Queue()
-    file_q = asyncio.Queue()
-    await asyncio.create_task(
-            parse_paths_task(['https://yadi.sk/d/FMbYkNAfcOYAzg?w=1'], 1000,
-                             path_q)
-          )
-    await asyncio.create_task(download_task(path_q, file_q))
-    await asyncio.create_task(download_consumer(file_q))
-    await path_q.join()
-    await file_q.join()
-
-
-loop = asyncio.get_event_loop()
-loop.run_until_complete(test_downloader())
-'''
+async def path_list_agen(
+        path_list: List[Path_t]) -> AsyncGenerator[Path_t, None]:
+    for path in path_list:
+        yield path
+        
