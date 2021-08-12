@@ -1,7 +1,7 @@
 import asyncio
 import re
 from collections import deque
-from typing import Any, List, Tuple, AsyncGenerator
+from typing import Any, AsyncGenerator, List
 
 import aiohttp
 

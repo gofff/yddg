@@ -1,6 +1,5 @@
-from typing import Tuple, Optional
-
 import asyncio
+from typing import Optional, Tuple
 
 YDiskPath = Tuple[str, str]
 ExtractTask = Optional[asyncio.Future[None]]

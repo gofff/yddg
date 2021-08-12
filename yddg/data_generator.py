@@ -1,13 +1,9 @@
-import multiprocessing as mp
-import random
-import time
-from typing import (Any, List, Optional, Union, AsyncGenerator, Generator,
-                    Iterable, Iterator)
-
 import asyncio
+import random
+from typing import Iterable, List
 
-import yddg.constants as const
 import yddg.api_tasks as api_tasks
+import yddg.constants as const
 import yddg.custom_types as T
 
 
@@ -86,7 +82,7 @@ class YndxDiskDataGenerator(Iterable):
             raise StopAsyncIteration
         else:
             return await self.item_queue.get()
-        assert f"Wrong item and endless flag combination in yddg.__anext__"
+        assert "Wrong item and endless flag combination in yddg.__anext__"
 
     def __iter__(self):
         return self

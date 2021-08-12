@@ -1,8 +1,10 @@
 import asyncio
+
 import pytest
 
 from tests.cases import PublicDiskCaseConstants as case_const
 from yddg.data_generator import YndxDiskDataGenerator
+
 
 @pytest.mark.asyncio
 async def test_generator_wo_features():
