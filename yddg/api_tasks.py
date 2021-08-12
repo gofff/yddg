@@ -5,8 +5,8 @@ from typing import Any, List, Tuple, AsyncGenerator
 
 import aiohttp
 
-import constants as const
-import custom_types as T
+import yddg.constants as const
+import yddg.custom_types as T
 
 
 async def download_file(session: aiohttp.ClientSession, url: str,

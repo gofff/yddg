@@ -6,9 +6,9 @@ from typing import (Any, List, Optional, Union, AsyncGenerator, Generator,
 
 import asyncio
 
-import constants as const
-import api_tasks as api_tasks
-import custom_types as T
+import yddg.constants as const
+import yddg.api_tasks as api_tasks
+import yddg.custom_types as T
 
 
 class YndxDiskDataGenerator(Iterable):
