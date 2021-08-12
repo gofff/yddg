@@ -6,8 +6,7 @@ from typing import Any, List, Tuple, AsyncGenerator
 import aiohttp
 
 import constants as const
-
-Path_t = Tuple[str, str]
+import custom_types as T
 
 
 async def download_file(session: aiohttp.ClientSession, url: str,
@@ -65,11 +64,10 @@ async def download_task(path_queue: asyncio.Queue,
             path_queue.task_done()
         await out_queue.put(None)
 
-
 async def parse_paths_task(
         urls: List[str],
         max_files_in_path: int,
-        exclude_names: str = '') -> AsyncGenerator[Path_t, None]:
+        exclude_names: str = '') -> AsyncGenerator[T.YDiskPath, None]:
     path_stack = deque([(url, '') for url in urls])
     skip_filter = re.compile(exclude_names) if exclude_names else None
 
@@ -95,7 +93,7 @@ async def parse_paths_task(
                     pass
 
 async def path_list_agen(
-        path_list: List[Path_t]) -> AsyncGenerator[Path_t, None]:
+        path_list: List[T.YDiskPath]) -> AsyncGenerator[T.YDiskPath, None]:
     for path in path_list:
         yield path
         

@@ -8,8 +8,7 @@ import asyncio
 
 import constants as const
 import api_tasks as api_tasks
-
-
+import custom_types as T
 
 
 class YndxDiskDataGenerator(Iterable):
@@ -29,13 +28,13 @@ class YndxDiskDataGenerator(Iterable):
         self.endless = endless
         self.exclude_names = exclude_names
 
-        self.paths: List[str] = []
-        self.paths_queue: asyncio.Queue[str] = asyncio.Queue(queue_size * 2)
-        self.item_queue: asyncio.Queue[Any] = asyncio.Queue(queue_size)
+        self.paths: List[T.YDiskPath] = []
+        self.paths_queue: T.YDiskPathQueue = asyncio.Queue(queue_size * 2)
+        self.item_queue: T.ItemQueue = asyncio.Queue(queue_size)
         self.is_first_path_extract = True
         self.path_extract_stop = False
-        self.path_extract_task = None
-        self.item_extract_task = None
+        self.path_extract_task: T.ExtractTask = None
+        self.item_extract_task: T.ExtractTask = None
         
     async def __path_extracting(self) -> None:
         path_gen = None
@@ -51,7 +50,6 @@ class YndxDiskDataGenerator(Iterable):
             async for path in path_gen:
                 if self.reusable and self.is_first_path_extract:
                     self.paths.append(path)
-                print(f"Put {path[1]}")
                 await self.paths_queue.put(path)
 
             self.is_first_path_extract = False
@@ -97,33 +95,24 @@ class YndxDiskDataGenerator(Iterable):
     def __aiter__(self):
         return self
 
-    def __del__(self) -> None:
-        self.stop()
-        #self.paths_queue.join()
-        #self.item_queue.join()
+    async def __aenter__(self):
+        await self.start()
+        return self
+
+    async def __aexit__(self, *excinfo):
+        await self.stop()
    
 async def main():
     urls = ['https://yadi.sk/d/FMbYkNAfcOYAzg?w=1']
-    yddg = YndxDiskDataGenerator(urls, 100, reusable=True, shuffle=True, 
-                                 endless=True)
-    await yddg.start()
-    counter = 0
-    async for item in yddg:
-        print(f"{counter} Result: {item[1]}")
-        counter += 1
-        if counter > 7:
-            break   
-    await yddg.stop()
-'''
-    await yddg.start()
-    counter = 0
-    async for item in yddg:
-        print(f"{counter} Result: {item[1]}")
-        counter += 1
-        if counter > 10:
-            break   
-    yddg.stop()
-'''
+
+    async with YndxDiskDataGenerator(urls, 100, reusable=True, shuffle=True, 
+                                     endless=True) as yddg:
+        counter = 0
+        async for item in yddg:
+            print(f"{counter} Result: {item[1]}")
+            counter += 1
+            if counter > 10:
+                break   
 
 if __name__ == "__main__":
     asyncio.get_event_loop().run_until_complete(main())
