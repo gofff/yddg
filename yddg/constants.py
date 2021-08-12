@@ -3,9 +3,11 @@ from typing import Any
 
 DEFAULT_QUEUE_SIZE = 8
 
+
 class REQ_STATUS:
 
     OK = 200
+
 
 class YD_API:
 
@@ -16,7 +18,7 @@ class YD_API:
 def bad_request_warning(status_code: int, url: str, params: Any) -> None:
 
     warnings.warn(
-        f'Bad request status ({status_code}) to '
-        + f'{url} with params: {params}',
+        f'Bad request status ({status_code}) to ' +
+        f'{url} with params: {params}',
         RuntimeWarning,
     )

@@ -13,14 +13,16 @@ import custom_types as T
 
 class YndxDiskDataGenerator(Iterable):
 
-    def __init__(self,
-                 urls: List[str],
-                 max_files_in_path: int,
-                 reusable: bool = False, # not delete paths
-                 shuffle: bool = False, # shuffle paths inplace and in runtime
-                 endless: bool = False, # cyclic repeat
-                 queue_size: int = const.DEFAULT_QUEUE_SIZE,
-                 exclude_names: str = '',) -> None:
+    def __init__(
+        self,
+        urls: List[str],
+        max_files_in_path: int,
+        reusable: bool = False,    # not delete paths
+        shuffle: bool = False,    # shuffle paths inplace and in runtime
+        endless: bool = False,    # cyclic repeat
+        queue_size: int = const.DEFAULT_QUEUE_SIZE,
+        exclude_names: str = '',
+    ) -> None:
         self.urls = urls
         self.max_files = max_files_in_path
         self.reusable = reusable
@@ -35,7 +37,7 @@ class YndxDiskDataGenerator(Iterable):
         self.path_extract_stop = False
         self.path_extract_task: T.ExtractTask = None
         self.item_extract_task: T.ExtractTask = None
-        
+
     async def __path_extracting(self) -> None:
         path_gen = None
         while not self.path_extract_stop:
@@ -59,12 +61,9 @@ class YndxDiskDataGenerator(Iterable):
 
     async def start(self) -> None:
         self.path_extract_task = asyncio.ensure_future(
-                                    self.__path_extracting()
-                                 )
+            self.__path_extracting())
         self.item_extract_task = asyncio.ensure_future(
-                                    api_tasks.download_task(self.paths_queue,
-                                                            self.item_queue)
-                                 )
+            api_tasks.download_task(self.paths_queue, self.item_queue))
 
     async def stop(self) -> None:
         self.path_extract_stop = True
@@ -80,7 +79,7 @@ class YndxDiskDataGenerator(Iterable):
             self.item_extract_task.cancel()
 
     async def __anext__(self):
-        item = await self.item_queue.get() 
+        item = await self.item_queue.get()
         if item is not None:
             return item
         elif not self.endless:
@@ -101,18 +100,23 @@ class YndxDiskDataGenerator(Iterable):
 
     async def __aexit__(self, *excinfo):
         await self.stop()
-   
+
+
 async def main():
     urls = ['https://yadi.sk/d/FMbYkNAfcOYAzg?w=1']
 
-    async with YndxDiskDataGenerator(urls, 100, reusable=True, shuffle=True, 
+    async with YndxDiskDataGenerator(urls,
+                                     100,
+                                     reusable=True,
+                                     shuffle=True,
                                      endless=True) as yddg:
         counter = 0
         async for item in yddg:
             print(f"{counter} Result: {item[1]}")
             counter += 1
             if counter > 10:
-                break   
+                break
+
 
 if __name__ == "__main__":
     asyncio.get_event_loop().run_until_complete(main())

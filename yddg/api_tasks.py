@@ -64,6 +64,7 @@ async def download_task(path_queue: asyncio.Queue,
             path_queue.task_done()
         await out_queue.put(None)
 
+
 async def parse_paths_task(
         urls: List[str],
         max_files_in_path: int,
@@ -86,14 +87,13 @@ async def parse_paths_task(
                     path_stack.appendleft(url_path)
                 elif item['type'] == 'file':
                     yield url_path
-                    #await out_queue.put(url_path)
                 else:
                     assert f"""Bad path item type {item['type']} with
                             requested path {url_path}"""
                     pass
 
+
 async def path_list_agen(
         path_list: List[T.YDiskPath]) -> AsyncGenerator[T.YDiskPath, None]:
     for path in path_list:
         yield path
-        
