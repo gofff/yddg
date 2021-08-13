@@ -63,6 +63,9 @@ class YndxDiskDataGenerator(Iterable):
 
     async def stop(self) -> None:
         self.path_extract_stop = True
+
+        assert self.path_extract_task is not None, (
+            "Path extract task must not be None when stop yddg")
         if not self.path_extract_task.cancelled():
             self.path_extract_task.cancel()
 
@@ -71,6 +74,8 @@ class YndxDiskDataGenerator(Iterable):
                 self.item_queue.task_done()
             self.item_queue.task_done()
 
+        assert self.item_extract_task is not None, (
+            "Item extract task must not be None when stop yddg")
         if not self.item_extract_task.cancelled():
             self.item_extract_task.cancel()
 
@@ -82,7 +87,7 @@ class YndxDiskDataGenerator(Iterable):
             raise StopAsyncIteration
         else:
             return await self.item_queue.get()
-        assert "Wrong item and endless flag combination in yddg.__anext__"
+        assert False, "Wrong state in yddg.__anext__"
 
     def __iter__(self):
         return self

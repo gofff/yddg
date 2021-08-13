@@ -31,7 +31,7 @@ async def download_file(session: aiohttp.ClientSession, url: str,
             return b''
         return await resp.content.read()
 
-    assert f"Wrong return statement in download_file({url}, {path})"
+    assert False, f"Wrong return statement in download_file({url}, {path})"
     return b''
 
 
