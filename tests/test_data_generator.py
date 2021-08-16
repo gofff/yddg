@@ -7,6 +7,7 @@ from yddg.data_generator import YndxDiskDataGenerator
 
 
 @pytest.mark.asyncio
+@pytest.mark.timeout(10)
 async def test_generator_wo_features():
     args = [[case_const.CORRECT_URL], case_const.CORRECT_FILES_NUM]
     kwargs = {"reusable": False, "shuffle": False, "endless": False}
