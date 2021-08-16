@@ -1,11 +1,23 @@
 import asyncio
+import os
 import random
-from typing import Iterable, List
+from typing import Iterable, List, Union
 
 import yddg.api_tasks as api_tasks
 import yddg.constants as const
 import yddg.custom_types as T
 
+
+async def flush(queue: Union[T.YDiskPathQueue, T.ItemQueue], 
+                by_none: bool = False) -> None:
+    if by_none:
+        while await queue.get() is not None:
+            queue.task_done()
+        queue.task_done()
+    else:
+        while not queue.empty():
+            await queue.get()
+            queue.task_done()
 
 class YndxDiskDataGenerator(Iterable):
 
@@ -32,7 +44,8 @@ class YndxDiskDataGenerator(Iterable):
         self.is_first_path_extract = True
         self.path_extract_stop = False
         self.path_extract_task: T.ExtractTask = None
-        self.item_extract_task: T.ExtractTask = None
+        self.item_extract_task: T.ExtractTask = None 
+
 
     async def __path_extracting(self) -> None:
         path_gen = None
@@ -48,8 +61,10 @@ class YndxDiskDataGenerator(Iterable):
             async for path in path_gen:
                 if self.reusable and self.is_first_path_extract:
                     self.paths.append(path)
-                await self.paths_queue.put(path)
-
+                if not self.path_extract_stop:
+                    await self.paths_queue.put(path)
+                else:
+                    break
             self.is_first_path_extract = False
             if not self.endless:
                 self.path_extract_stop = True
@@ -62,31 +77,33 @@ class YndxDiskDataGenerator(Iterable):
             api_tasks.download_task(self.paths_queue, self.item_queue))
 
     async def stop(self) -> None:
+        # flush paths queue
         self.path_extract_stop = True
+        await flush(self.paths_queue)
+        await self.paths_queue.put(None) # to stop item downloads
 
-        assert self.path_extract_task is not None, (
-            "Path extract task must not be None when stop yddg")
-        if not self.path_extract_task.cancelled():
-            self.path_extract_task.cancel()
+        # flush items queue
+        if self.endless or not self.item_queue.empty():
+            await flush(self.item_queue, by_none=True)
 
-        if self.item_queue.qsize():
-            while await self.item_queue.get() is not None:
-                self.item_queue.task_done()
-            self.item_queue.task_done()
-
-        assert self.item_extract_task is not None, (
-            "Item extract task must not be None when stop yddg")
-        if not self.item_extract_task.cancelled():
-            self.item_extract_task.cancel()
+        # we cannot guarantee that paths_queue doesnt have
+        # elements after None, so we must try to clear it
+        await flush(self.paths_queue)
+        await self.paths_queue.join()
+        await self.item_queue.join()
 
     async def __anext__(self):
         item = await self.item_queue.get()
+        self.item_queue.task_done()
         if item is not None:
             return item
         elif not self.endless:
             raise StopAsyncIteration
         else:
-            return await self.item_queue.get()
+            # return next item
+            item = await self.item_queue.get()
+            self.item_queue.task_done()
+            return item
         assert False, "Wrong state in yddg.__anext__"
 
     def __iter__(self):
@@ -115,9 +132,10 @@ async def main():
         async for item in yddg:
             print(f"{counter} Result: {item[1]}")
             counter += 1
-            if counter > 10:
+            if counter > 7:
                 break
 
 
 if __name__ == "__main__":
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
     asyncio.get_event_loop().run_until_complete(main())
