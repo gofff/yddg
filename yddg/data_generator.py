@@ -25,17 +25,17 @@ class YndxDiskDataGenerator(Iterable):
         self,
         urls: List[str],
         max_files_in_path: int,
-        reusable: bool = False,    # not delete paths
-        shuffle: bool = False,    # shuffle paths inplace and in runtime
         endless: bool = False,    # cyclic repeat
+        shuffle: bool = False,    # shuffle paths inplace and in runtime
+        cache_paths: bool = False,    # not delete paths
         queue_size: int = const.DEFAULT_QUEUE_SIZE,
         exclude_names: str = '',
     ) -> None:
         self.urls = urls
         self.max_files = max_files_in_path
-        self.reusable = reusable
-        self.shuffle = shuffle
         self.endless = endless
+        self.shuffle = shuffle
+        self.cache_paths = cache_paths
         self.exclude_names = exclude_names
 
         self.paths: List[T.YDiskPath] = []
@@ -59,7 +59,7 @@ class YndxDiskDataGenerator(Iterable):
                                                       self.max_files,
                                                       self.exclude_names)
             async for path in path_gen:
-                if self.reusable and self.is_first_path_extract:
+                if self.cache_paths and self.is_first_path_extract:
                     self.paths.append(path)
                 if not self.path_extract_stop:
                     await self.paths_queue.put(path)
@@ -125,7 +125,7 @@ async def main():
 
     async with YndxDiskDataGenerator(urls,
                                      100,
-                                     reusable=True,
+                                     cache_paths=True,
                                      shuffle=True,
                                      endless=True) as yddg:
         counter = 0
@@ -137,5 +137,9 @@ async def main():
 
 
 if __name__ == "__main__":
-    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-    asyncio.get_event_loop().run_until_complete(main())
+    import os 
+    if os.name == "nt":
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+        asyncio.get_event_loop().run_until_complete(main())
+    else:
+        asyncio.run(main())
