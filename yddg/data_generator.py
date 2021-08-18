@@ -1,63 +1,145 @@
-import multiprocessing as mp
-from typing import Any, List, Optional
+import asyncio
+import random
+from typing import Iterable, List, Union
 
-from yddg.downloader import Downloader
-from yddg.path_requester import PathRequester
+import yddg.api_tasks as api_tasks
+import yddg.constants as const
+import yddg.custom_types as T
 
 
-class YndxDiskDataGenerator:
+async def flush(queue: Union[T.YDiskPathQueue, T.ItemQueue],
+                by_none: bool = False) -> None:
+    if by_none:
+        while await queue.get() is not None:
+            queue.task_done()
+        queue.task_done()
+    else:
+        while not queue.empty():
+            await queue.get()
+            queue.task_done()
 
-    def __init__(self,
-                 urls: List[str],
-                 max_files_in_path: int,
-                 path_stream: bool = False,
-                 queue_size: int = 2,
-                 exclude_names: str = '') -> None:
 
-        self.path_stream = path_stream
-        self.path_requester = PathRequester(max_files_in_path, exclude_names)
+class YndxDiskDataGenerator(Iterable):
 
-        self.downloader = Downloader()
-        self.download_proc: Optional[mp.Process] = None
+    def __init__(
+        self,
+        urls: List[str],
+        max_files_in_path: int,
+        endless: bool = False,    # cyclic repeat
+        shuffle: bool = False,    # shuffle paths inplace and in runtime
+        cache_paths: bool = False,    # not delete paths
+        queue_size: int = const.DEFAULT_QUEUE_SIZE,
+        exclude_names: str = '',
+    ) -> None:
+        self.urls = urls
+        self.max_files = max_files_in_path
+        self.endless = endless
+        self.shuffle = shuffle
+        self.cache_paths = cache_paths
+        self.exclude_names = exclude_names
 
-        self.queue_size = queue_size
-        self.out_queue: mp.Queue[Any] = mp.Queue(queue_size)
+        self.paths: List[T.YDiskPath] = []
+        self.paths_queue: T.YDiskPathQueue = asyncio.Queue(queue_size * 2)
+        self.item_queue: T.ItemQueue = asyncio.Queue(queue_size)
+        self.is_first_path_extract = True
+        self.path_extract_stop = False
+        self.path_extract_task: T.ExtractTask = None
+        self.item_extract_task: T.ExtractTask = None
 
-        self.__start_process__(urls)
+    async def __path_extracting(self) -> None:
+        path_gen = None
+        while not self.path_extract_stop:
+            if len(self.paths):
+                if self.shuffle:
+                    random.shuffle(self.paths)
+                path_gen = api_tasks.path_list_agen(self.paths)
+            else:
+                path_gen = api_tasks.parse_paths_task(self.urls,
+                                                      self.max_files,
+                                                      self.exclude_names)
+            async for path in path_gen:
+                if self.cache_paths and self.is_first_path_extract:
+                    self.paths.append(path)
+                if not self.path_extract_stop:
+                    await self.paths_queue.put(path)
+                else:
+                    break
+            self.is_first_path_extract = False
+            if not self.endless:
+                self.path_extract_stop = True
+        await self.paths_queue.put(None)
 
-    def __start_process__(self, urls: List[str]) -> None:
+    async def start(self) -> None:
+        self.path_extract_task = asyncio.ensure_future(
+            self.__path_extracting())
+        self.item_extract_task = asyncio.ensure_future(
+            api_tasks.download_task(self.paths_queue, self.item_queue))
 
-        if self.path_stream:
+    async def stop(self) -> None:
+        # flush paths queue
+        self.path_extract_stop = True
+        await flush(self.paths_queue)
+        await self.paths_queue.put(None)    # to stop item downloads
 
-            path_queue: mp.Queue[Any] = mp.Queue(self.queue_size * 2)
-            path_request_call = self.path_requester.get_path_stream
-            self.path_request_proc = mp.Process(target=path_request_call,
-                                                args=(urls, path_queue))
-            self.path_request_proc.start()
+        # flush items queue
+        if self.endless or not self.item_queue.empty():
+            await flush(self.item_queue, by_none=True)
 
-            download_call = self.downloader.download_stream_from_stream
-            self.download_proc = mp.Process(target=download_call,
-                                            args=(path_queue, self.out_queue))
+        # we cannot guarantee that paths_queue doesnt have
+        # elements after None, so we must try to clear it
+        await flush(self.paths_queue)
+        await self.paths_queue.join()
+        await self.item_queue.join()
+
+    async def __anext__(self):
+        item = await self.item_queue.get()
+        self.item_queue.task_done()
+        if item is not None:
+            return item
+        elif not self.endless:
+            raise StopAsyncIteration
         else:
+            # return next item
+            item = await self.item_queue.get()
+            self.item_queue.task_done()
+            return item
+        assert False, "Wrong state in yddg.__anext__"
 
-            path_list = self.path_requester.get_all_paths(urls)
+    def __iter__(self):
+        return self
 
-            download_from_list_call = self.downloader.download_stream
-            self.download_proc = mp.Process(target=download_from_list_call,
-                                            args=(path_list, self.out_queue))
+    def __aiter__(self):
+        return self
 
-        self.download_proc.start()
-        return
+    async def __aenter__(self):
+        await self.start()
+        return self
 
-    def item_generator(self) -> Any:
+    async def __aexit__(self, *excinfo):
+        await self.stop()
 
-        item = self.out_queue.get(block=True)
-        while item is not None:
-            yield item
-            item = self.out_queue.get(block=True)
 
-    def __del__(self):
+async def main():
+    urls = ['https://yadi.sk/d/FMbYkNAfcOYAzg?w=1']
 
-        if self.path_stream:
-            self.path_request_proc.join()
-        self.download_proc.join()
+    async with YndxDiskDataGenerator(urls,
+                                     100,
+                                     cache_paths=True,
+                                     shuffle=True,
+                                     endless=True) as yddg:
+        counter = 0
+        async for item in yddg:
+            print(f"{counter} Result: {item[1]}")
+            counter += 1
+            if counter > 7:
+                break
+
+
+if __name__ == "__main__":
+    import os
+    if os.name == "nt":
+        asyncio.set_event_loop_policy(
+            asyncio.WindowsSelectorEventLoopPolicy())
+        asyncio.get_event_loop().run_until_complete(main())
+    else:
+        asyncio.run(main())

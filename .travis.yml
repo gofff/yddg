@@ -33,17 +33,17 @@ matrix:
       after_success: python 3 -m codecov
     
     # Not working now
-    #- name: "Python 3.9.0 on macOS"
-    #  os: osx
-    #  osx_image: xcode12.2  # Python 3.9.0 running on macOS 10.14.6
-    #  language: shell       # 'language: python' is an error on Travis CI macOS
-    #  before_install:
-    #    - pip3 install -U pip
-    #    - pip3 install -r requirements.txt
-    #    - pip3 install -r requirements-test.txt
-    #    - pip3 install codecov
-    #  script: python3 -m pytest
-    #  after_success: python 3 -m codecov
+    - name: "Python 3.9.0 on macOS"
+      os: osx
+      osx_image: xcode12.2  # Python 3.9.0 running on macOS 10.14.6
+      language: shell       # 'language: python' is an error on Travis CI macOS
+      before_install:
+        - pip3 install -U pip
+        - pip3 install -r requirements.txt
+        - pip3 install -r requirements-test.txt
+        - pip3 install codecov
+      script: python3 -m pytest -s -v
+      after_success: python 3 -m codecov
 
     #  ====== WINDOWS =========
     - name: "Python 3.7.4 on Windows"

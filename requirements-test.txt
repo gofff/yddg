@@ -1,2 +1,5 @@
 pytest
+pytest-asyncio
+pytest-timeout
 isort
+flake8

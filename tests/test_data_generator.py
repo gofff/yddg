@@ -1,47 +1,75 @@
+import asyncio
+
 import pytest
 
 from tests.cases import PublicDiskCaseConstants as case_const
 from yddg.data_generator import YndxDiskDataGenerator
+from yddg.constants import aenumerate
+import yddg.constants as yddg_const
 
+ONE_CASE_TIMEOUT = 10
+NUM_PASSES = 3
 
-@pytest.fixture
-def exclude_extension():
-    return '.jpg'
+async def check_one_pass(yddg, correct_result=case_const.CORRECT_OUT_PATHS):
+    results = set()
+    async for item in yddg:
+        results.add(item[1])
+    assert results == set(correct_result)
 
+async def check_multi_pass(yddg, num_passes):
+    num_paths = len(case_const.CORRECT_OUT_PATHS)
+    num_steps = num_passes * num_paths
+    result = set()
+    etalon = set(case_const.CORRECT_OUT_PATHS)
+    async for i, item in aenumerate(yddg):
+        if (i % num_paths) or not i:
+            result.add(item[1])
+        else:
+            assert result == etalon
+            result = {item[1]}
+        if i >= num_steps:
+            break
 
-@pytest.fixture(params=[
-        {
-            'path_stream': True,
-            'queue_size': 4
-        },
-        {
-            'path_stream': True,
-            'queue_size': 1
-        },
-        {
-            'path_stream': False,
-            'queue_size': 2
-        },
-])
-def data_generator_object(request, exclude_extension):
-    
-    urls = [case_const.CORRECT_URL, case_const.BAD_URL]
-    path_stream = request.param['path_stream']
-    queue_size = request.param['queue_size']
-    files_num = case_const.CORRECT_FILES_NUM
-    exclude_names = '*' + exclude_extension
-    return YndxDiskDataGenerator(urls = urls,
-                                 max_files_in_path = files_num,
-                                 path_stream = path_stream,
-                                 queue_size = queue_size,
-                                 exclude_names = exclude_names)
+@pytest.mark.timeout(ONE_CASE_TIMEOUT)
+@pytest.mark.asyncio
+async def test_generator_wo_features():
+    args = [[case_const.CORRECT_URL], case_const.CORRECT_FILES_NUM]
+    kwargs = {"endless": False, "shuffle": False, "cache_paths": False}
+    async with YndxDiskDataGenerator(*args, **kwargs) as yddg:
+        await check_one_pass(yddg)
 
+@pytest.mark.timeout(NUM_PASSES * ONE_CASE_TIMEOUT)
+@pytest.mark.asyncio
+@pytest.mark.parametrize("cache_paths", [True, False])
+async def test_generator_endless(cache_paths):
+    args = [[case_const.CORRECT_URL], case_const.CORRECT_FILES_NUM]
+    kwargs = {"endless": True, "shuffle": False, "cache_paths": cache_paths}
+    async with YndxDiskDataGenerator(*args, **kwargs) as yddg:
+        await check_multi_pass(yddg, NUM_PASSES)
 
-def test_item_generator(data_generator_object, exclude_extension):
+@pytest.mark.timeout(2 * ONE_CASE_TIMEOUT)
+@pytest.mark.asyncio
+async def test_generator_shuffle():
+    args = [[case_const.CORRECT_URL], case_const.CORRECT_FILES_NUM]
+    kwargs = {"endless": True, "shuffle": True, "cache_paths": True}
+    num_paths = len(case_const.CORRECT_OUT_PATHS)
+    result = []
+    async with YndxDiskDataGenerator(*args, **kwargs) as yddg:
+        async for i, item in aenumerate(yddg):
+            if i >= 2 * num_paths:
+                break
+            result.append(item[1])
+        assert result[:num_paths] != result[num_paths:]
 
-    datagen = data_generator_object
-    for item in datagen.item_generator():
-        out_url, out_path = item[:2]
-        assert out_url == case_const.CORRECT_URL
-        assert out_path in case_const.CORRECT_OUT_PATHS
-        assert not out_path.find(exclude_extension) >= 0
+@pytest.mark.timeout(2 * ONE_CASE_TIMEOUT)
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+        "exclude", ["folder_1", "jpg"]
+    )
+async def test_generator_exclude_names(exclude):
+    exclude_regexp = r"\S*" + exclude + r"*"
+    args = [[case_const.CORRECT_URL], case_const.CORRECT_FILES_NUM]
+    kwargs = {"endless": False, "exclude_names": exclude_regexp}
+    async with YndxDiskDataGenerator(*args, **kwargs) as yddg:
+        await check_one_pass(yddg, [x for x in case_const.CORRECT_OUT_PATHS
+                                       if exclude not in x])
