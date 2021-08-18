@@ -1,5 +1,6 @@
+import asyncio
 import warnings
-from typing import Any
+from typing import Any, AsyncGenerator, Tuple
 
 DEFAULT_QUEUE_SIZE = 8
 
@@ -22,3 +23,12 @@ def bad_request_warning(status_code: int, url: str, params: Any) -> None:
         f'{url} with params: {params}',
         RuntimeWarning,
     )
+
+
+async def aenumerate(
+    agenerator: AsyncGenerator[Any, None]
+) -> AsyncGenerator[Tuple[int, Any], None]:
+    i: int = 0
+    async for item in agenerator:
+        yield i, item
+        i += 1

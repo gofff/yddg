@@ -1,5 +1,4 @@
 import asyncio
-import os
 import random
 from typing import Iterable, List, Union
 
@@ -8,7 +7,7 @@ import yddg.constants as const
 import yddg.custom_types as T
 
 
-async def flush(queue: Union[T.YDiskPathQueue, T.ItemQueue], 
+async def flush(queue: Union[T.YDiskPathQueue, T.ItemQueue],
                 by_none: bool = False) -> None:
     if by_none:
         while await queue.get() is not None:
@@ -18,6 +17,7 @@ async def flush(queue: Union[T.YDiskPathQueue, T.ItemQueue],
         while not queue.empty():
             await queue.get()
             queue.task_done()
+
 
 class YndxDiskDataGenerator(Iterable):
 
@@ -44,8 +44,7 @@ class YndxDiskDataGenerator(Iterable):
         self.is_first_path_extract = True
         self.path_extract_stop = False
         self.path_extract_task: T.ExtractTask = None
-        self.item_extract_task: T.ExtractTask = None 
-
+        self.item_extract_task: T.ExtractTask = None
 
     async def __path_extracting(self) -> None:
         path_gen = None
@@ -80,7 +79,7 @@ class YndxDiskDataGenerator(Iterable):
         # flush paths queue
         self.path_extract_stop = True
         await flush(self.paths_queue)
-        await self.paths_queue.put(None) # to stop item downloads
+        await self.paths_queue.put(None)    # to stop item downloads
 
         # flush items queue
         if self.endless or not self.item_queue.empty():
@@ -137,9 +136,10 @@ async def main():
 
 
 if __name__ == "__main__":
-    import os 
+    import os
     if os.name == "nt":
-        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+        asyncio.set_event_loop_policy(
+            asyncio.WindowsSelectorEventLoopPolicy())
         asyncio.get_event_loop().run_until_complete(main())
     else:
         asyncio.run(main())

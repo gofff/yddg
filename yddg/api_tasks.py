@@ -62,7 +62,7 @@ async def download_task(path_queue: asyncio.Queue,
             await out_queue.put((*url_path, content))
             url_path = await path_queue.get()
             path_queue.task_done()
-        await out_queue.put(None)
+    await out_queue.put(None)
 
 
 async def parse_paths_task(
@@ -91,6 +91,9 @@ async def parse_paths_task(
                     assert f"""Bad path item type {item['type']} with
                             requested path {url_path}"""
                     pass
+    # sometimes in tests ClientSession doesnt have time to close
+    # but commnd after with fix this situation. idk why
+    return
 
 
 async def path_list_agen(
