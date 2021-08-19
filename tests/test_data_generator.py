@@ -2,10 +2,10 @@ import asyncio
 
 import pytest
 
-from tests.cases import PublicDiskCaseConstants as case_const
-from yddg.data_generator import YndxDiskDataGenerator
-from yddg.constants import aenumerate
 import yddg.constants as yddg_const
+from tests.cases import PublicDiskCaseConstants as case_const
+from yddg.constants import aenumerate
+from yddg.data_generator import YndxDiskDataGenerator
 
 ONE_CASE_TIMEOUT = 10
 NUM_PASSES = 3
