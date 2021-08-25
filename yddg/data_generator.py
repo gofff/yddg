@@ -108,6 +108,10 @@ class YndxDiskDataGenerator(Iterable):
     def __iter__(self):
         return self
 
+    def __next__(self):
+        assert "Calling non-async __next__"
+        return None
+
     def __aiter__(self):
         return self
 

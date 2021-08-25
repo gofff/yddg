@@ -1,8 +1,5 @@
-import asyncio
-
 import pytest
 
-import yddg.constants as yddg_const
 from tests.cases import PublicDiskCaseConstants as case_const
 from yddg.constants import aenumerate
 from yddg.data_generator import YndxDiskDataGenerator

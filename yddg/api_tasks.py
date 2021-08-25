@@ -90,7 +90,7 @@ async def parse_paths_task(
                 else:
                     assert f"""Bad path item type {item['type']} with
                             requested path {url_path}"""
-                    pass
+
     # sometimes in tests ClientSession doesnt have time to close
     # but commnd after with fix this situation. idk why
     return
