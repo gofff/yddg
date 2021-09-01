@@ -70,3 +70,24 @@ async def test_generator_exclude_names(exclude):
     async with YndxDiskDataGenerator(*args, **kwargs) as yddg:
         await check_one_pass(yddg, [x for x in case_const.CORRECT_OUT_PATHS
                                        if exclude not in x])
+
+@pytest.mark.filterwarnings("ignore: Bad request status*")
+@pytest.mark.timeout(ONE_CASE_TIMEOUT)
+@pytest.mark.asyncio
+async def test_bad_url():
+    args = [[case_const.BAD_URL], case_const.CORRECT_FILES_NUM]
+    kwargs = {"endless": False, "shuffle": False, "cache_paths": False}
+    async with YndxDiskDataGenerator(*args, **kwargs) as yddg:
+        async for item in yddg:
+            assert False
+
+@pytest.mark.timeout(ONE_CASE_TIMEOUT)
+@pytest.mark.asyncio
+async def test_nonasync_iterator_calls():
+    args = [[case_const.CORRECT_URL], case_const.CORRECT_FILES_NUM]
+    kwargs = {"endless": False, "shuffle": False, "cache_paths": False}
+    async with YndxDiskDataGenerator(*args, **kwargs) as yddg:
+        with pytest.raises(AssertionError) as err:
+            next(yddg)
+        with pytest.raises(AssertionError) as err:
+            iter(yddg)
