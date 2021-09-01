@@ -99,18 +99,13 @@ class YndxDiskDataGenerator(Iterable):
         elif not self.endless:
             raise StopAsyncIteration
         else:
-            # return next item
-            item = await self.item_queue.get()
-            self.item_queue.task_done()
-            return item
-        assert False, "Wrong state in yddg.__anext__"
+            assert False, "Wrong state in yddg.__anext__"
 
     def __iter__(self):
-        return self
+        assert False, "Calling non-async __iter__"
 
     def __next__(self):
-        assert "Calling non-async __next__"
-        return None
+        assert False, "Calling non-async __next__"
 
     def __aiter__(self):
         return self
@@ -123,6 +118,7 @@ class YndxDiskDataGenerator(Iterable):
         await self.stop()
 
 
+"""
 async def main():
     urls = ['https://yadi.sk/d/FMbYkNAfcOYAzg?w=1']
 
@@ -147,3 +143,4 @@ if __name__ == "__main__":
         asyncio.get_event_loop().run_until_complete(main())
     else:
         asyncio.run(main())
+"""
