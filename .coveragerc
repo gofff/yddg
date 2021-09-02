@@ -1,5 +1,6 @@
 # .coveragerc to control coverage.py
 [run]
+source = yddg
 branch = True
 omit = yddg/constants.py, yddg/custom_types.py
 
