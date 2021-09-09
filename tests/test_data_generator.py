@@ -7,7 +7,7 @@ from yddg.data_generator import YndxDiskDataGenerator
 ONE_CASE_TIMEOUT = 10
 NUM_PASSES = 3
 
-async def check_one_pass(yddg, correct_result=case_const.CORRECT_OUT_PATHS):
+async def check_one_pass(yddg, correct_result):
     results = set()
     async for item in yddg:
         results.add(item[1])
@@ -33,7 +33,7 @@ async def test_generator_wo_features():
     args = [[case_const.CORRECT_URL], case_const.CORRECT_FILES_NUM]
     kwargs = {"endless": False, "shuffle": False, "cache_paths": False}
     async with YndxDiskDataGenerator(*args, **kwargs) as yddg:
-        await check_one_pass(yddg)
+        await check_one_pass(yddg, case_const.CORRECT_OUT_PATHS)
 
 @pytest.mark.timeout(NUM_PASSES * ONE_CASE_TIMEOUT)
 @pytest.mark.asyncio
@@ -78,7 +78,7 @@ async def test_bad_url():
     args = [[case_const.BAD_URL], case_const.CORRECT_FILES_NUM]
     kwargs = {"endless": False, "shuffle": False, "cache_paths": False}
     async with YndxDiskDataGenerator(*args, **kwargs) as yddg:
-        async for item in yddg:
+        async for _ in yddg:
             assert False
 
 @pytest.mark.timeout(ONE_CASE_TIMEOUT)
@@ -87,7 +87,7 @@ async def test_nonasync_iterator_calls():
     args = [[case_const.CORRECT_URL], case_const.CORRECT_FILES_NUM]
     kwargs = {"endless": False, "shuffle": False, "cache_paths": False}
     async with YndxDiskDataGenerator(*args, **kwargs) as yddg:
-        with pytest.raises(AssertionError) as err:
+        with pytest.raises(AssertionError) as _:
             next(yddg)
-        with pytest.raises(AssertionError) as err:
+        with pytest.raises(AssertionError) as _:
             iter(yddg)
