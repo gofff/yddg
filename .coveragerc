@@ -2,7 +2,7 @@
 [run]
 source = yddg
 branch = True
-omit = yddg/constants.py, yddg/custom_types.py
+omit = yddg/constants.py, yddg/custom_types.py, yddg/__init__.py
 
 [report]
 # Regexes for lines to exclude from consideration
@@ -28,7 +28,7 @@ exclude_lines =
 
 ignore_errors = True
 
-omit = yddg/constants.py, yddg/custom_types.py
+omit = yddg/constants.py, yddg/custom_types.py, yddg/__init__.py
 
 
 [html]
