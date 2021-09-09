@@ -92,5 +92,5 @@ async def parse_paths_task(
                             requested path {url_path}"""
 
     # sometimes in tests ClientSession doesnt have time to close
-    # but commnd after with fix this situation. idk why
+    # but command after with statement fix this situation. idk why
     return
