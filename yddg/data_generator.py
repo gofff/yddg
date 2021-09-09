@@ -19,7 +19,7 @@ async def flush(queue: Union[T.YDiskPathQueue, T.ItemQueue],
             queue.task_done()
 
 
-class YndxDiskDataGenerator(Iterable):
+class YDDataGenerator(Iterable):
 
     def __init__(
         self,
@@ -52,7 +52,7 @@ class YndxDiskDataGenerator(Iterable):
             if len(self.paths):
                 if self.shuffle:
                     random.shuffle(self.paths)
-                path_gen = api_tasks.path_list_agen(self.paths)
+                path_gen = const.path_list_agen(self.paths)
             else:
                 path_gen = api_tasks.parse_paths_task(self.urls,
                                                       self.max_files,
@@ -122,7 +122,7 @@ class YndxDiskDataGenerator(Iterable):
 async def main():
     urls = ['https://yadi.sk/d/FMbYkNAfcOYAzg?w=1']
 
-    async with YndxDiskDataGenerator(urls,
+    async with YDDataGenerator(urls,
                                      100,
                                      cache_paths=True,
                                      shuffle=True,

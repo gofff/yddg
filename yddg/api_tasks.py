@@ -94,9 +94,3 @@ async def parse_paths_task(
     # sometimes in tests ClientSession doesnt have time to close
     # but commnd after with fix this situation. idk why
     return
-
-
-async def path_list_agen(
-        path_list: List[T.YDiskPath]) -> AsyncGenerator[T.YDiskPath, None]:
-    for path in path_list:
-        yield path

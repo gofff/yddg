@@ -1,5 +1,5 @@
 import warnings
-from typing import Any, AsyncGenerator, Tuple
+from typing import Any, AsyncGenerator, List, Tuple
 
 DEFAULT_QUEUE_SIZE = 8
 
@@ -31,3 +31,9 @@ async def aenumerate(
     async for item in agenerator:
         yield i, item
         i += 1
+
+
+async def path_list_agen(
+        path_list: List[Any]) -> AsyncGenerator[Any, None]:
+    for path in path_list:
+        yield path
