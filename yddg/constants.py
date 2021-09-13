@@ -33,7 +33,31 @@ async def aenumerate(
         i += 1
 
 
-async def path_list_agen(
-        path_list: List[Any]) -> AsyncGenerator[Any, None]:
+async def path_list_agen(path_list: List[Any]) -> AsyncGenerator[Any, None]:
     for path in path_list:
         yield path
+
+
+def event_loop_closed_workaround() -> None:
+    import sys
+
+    # thanks for workaround:
+    # https://github.com/aio-libs/aiohttp/issues/4324#issuecomment-733884349
+    if (sys.platform.startswith("win")
+            and sys.version_info[2] < 10):
+        from asyncio.proactor_events import _ProactorBasePipeTransport
+        from functools import wraps
+
+        def silence_del(func):
+            @wraps(func)
+            def wrapper(self, *args, **kwargs):
+                try:
+                    return func(self, *args, **kwargs)
+                except RuntimeError as e:
+                    if str(e) != 'Event loop is closed':
+                        raise
+
+            return wrapper
+
+        _ProactorBasePipeTransport.__del__ = silence_del(
+            _ProactorBasePipeTransport.__del__)

@@ -20,7 +20,6 @@ async def flush(queue: Union[T.YDiskPathQueue, T.ItemQueue],
 
 
 class YDDataGenerator(Iterable):
-
     def __init__(
         self,
         urls: List[str],
@@ -70,6 +69,12 @@ class YDDataGenerator(Iterable):
         await self.paths_queue.put(None)
 
     async def start(self) -> None:
+        # To silence 'Event loop is closed' RuntimeError in Windows
+        # and Python < 3.10
+        # For more information read:
+        # https://github.com/aio-libs/aiohttp/issues/4324
+        const.event_loop_closed_workaround()
+
         self.path_extract_task = asyncio.ensure_future(
             self.__path_extracting())
         self.item_extract_task = asyncio.ensure_future(
@@ -90,6 +95,14 @@ class YDDataGenerator(Iterable):
         await flush(self.paths_queue)
         await self.paths_queue.join()
         await self.item_queue.join()
+
+        if (self.path_extract_task is not None
+                and not self.path_extract_task.cancelled()):
+            self.path_extract_task.cancel()
+
+        if (self.item_extract_task is not None
+                and not self.item_extract_task.cancelled()):
+            self.item_extract_task.cancel()
 
     async def __anext__(self):
         item = await self.item_queue.get()
