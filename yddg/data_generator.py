@@ -53,16 +53,17 @@ class YDDataGenerator(Iterable):
                 Paths whith fullmatchs with Pattern will be skipped
 
         Yields:
-            str: public url of downloaded file
-            str: path of downloaded file inside root dir from url
-            bytes: bytes of downloaded file
+            (str, str, bytes) : (url, path, file-bytes)
+            url - public url of downloaded file, 
+            path - path of downloaded file inside root dir from url,
+            file-bytes - bytes of downloaded file
 
         Raises:
             RuntimeWarning: if request to storage API goes wrong
 
         Example:
             .. code-block:: python
-            
+
                 from yddg import YDDataGenerator
                 async with YDDataGenerator(urls, max_files) as yddg:
                     async for item in yddg:
