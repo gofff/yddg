@@ -22,7 +22,7 @@ async def flush(queue: Union[T.YDiskPathQueue, T.ItemQueue],
 class YDDataGenerator(Iterable):
     """ Asynchronous generator to work with data from Yandex Disk
         storage (disk.yandex.ru) without saving items to long-term
-        memory. 
+        memory.
 
         In general YDDG
             * takes list with urls (only public urls now)
@@ -35,26 +35,26 @@ class YDDataGenerator(Iterable):
             urls: list of urls to get files from
             max_files_in_path: maximum number of files
                 in one directory (or folder), storage API requires
-                this value 
+                this value
             endless: makes generator endless if True. Defaults to False
-            shuffle: reorders return sequence with random 
+            shuffle: reorders return sequence with random
                 if selected to True. Defaults to False
             cache_paths: saves path sequence inside to avoid repeats
-                of directory tree parsing. It's usefull 
+                of directory tree parsing. It's usefull
                 when dir-tree is constant and generator is endless.
                 Defaults to False
             queue_size: size of queue that store downloaded files
-                before yielding from generator. Defaults to 8. 
-                If you work with lightweight files or 
-                you have a large amount of memory, network and cpu 
-                ticks, you can increase queue_size. If you aim is 
+                before yielding from generator. Defaults to 8.
+                If you work with lightweight files or
+                you have a large amount of memory, network and cpu
+                ticks, you can increase queue_size. If you aim is
                 resource saving -- decrease size
             exclude_names: string with regexp to compile re.Pattern.
                 Paths whith fullmatchs with Pattern will be skipped
 
         Yields:
             (str, str, bytes) : (url, path, file-bytes)
-            url - public url of downloaded file, 
+            url - public url of downloaded file,
             path - path of downloaded file inside root dir from url,
             file-bytes - bytes of downloaded file
 
