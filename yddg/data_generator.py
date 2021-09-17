@@ -71,6 +71,7 @@ class YDDataGenerator(Iterable):
                         do_something(file_bytes)
 
     """
+
     def __init__(
         self,
         urls: List[str],

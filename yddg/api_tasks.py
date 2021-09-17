@@ -51,6 +51,9 @@ async def get_items(session: aiohttp.ClientSession, url: str, path: str,
         resp_json = await resp.json()
         return resp_json['_embedded']['items']
 
+    assert False, f"Wrong return statement in get_items({url}, {path})"
+    return []
+
 
 async def download_task(path_queue: asyncio.Queue,
                         out_queue: asyncio.Queue) -> None:
