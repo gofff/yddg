@@ -20,6 +20,56 @@ async def flush(queue: Union[T.YDiskPathQueue, T.ItemQueue],
 
 
 class YDDataGenerator(Iterable):
+    """ Asynchronous generator to work with data from Yandex Disk
+        storage (disk.yandex.ru) without saving items to long-term
+        memory. 
+
+        In general YDDG
+            * takes list with urls (only public urls now)
+            * parses directory tree of each url
+            * construct remote path sequence to return one-by-one
+            * send request to get file bytes from path sequence
+            * return file bytes when __anext__() is called
+
+        Args:
+            urls: list of urls to get files from
+            max_files_in_path: maximum number of files
+                in one directory (or folder), storage API requires
+                this value 
+            endless: makes generator endless if True. Defaults to False
+            shuffle: reorders return sequence with random 
+                if selected to True. Defaults to False
+            cache_paths: saves path sequence inside to avoid repeats
+                of directory tree parsing. It's usefull 
+                when dir-tree is constant and generator is endless.
+                Defaults to False
+            queue_size: size of queue that store downloaded files
+                before yielding from generator. Defaults to 8. 
+                If you work with lightweight files or 
+                you have a large amount of memory, network and cpu 
+                ticks, you can increase queue_size. If you aim is 
+                resource saving -- decrease size
+            exclude_names: string with regexp to compile re.Pattern.
+                Paths whith fullmatchs with Pattern will be skipped
+
+        Yields:
+            str: public url of downloaded file
+            str: path of downloaded file inside root dir from url
+            bytes: bytes of downloaded file
+
+        Raises:
+            RuntimeWarning: if request to storage API goes wrong
+
+        Example:
+            .. code-block:: python
+            
+                from yddg import YDDataGenerator
+                async with YDDataGenerator(urls, max_files) as yddg:
+                    async for item in yddg:
+                        url, path, file_bytes = item
+                        do_something(file_bytes)
+
+    """
     def __init__(
         self,
         urls: List[str],
